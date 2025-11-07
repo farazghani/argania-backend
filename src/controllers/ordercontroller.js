@@ -71,7 +71,7 @@ export const createOrder = async (req, res) => {
             });
         }
 
-        res.json(order);
+        res.status(201).json(order);
     } catch (error) {
         console.error("createOrder:", error);
         res.status(500).json({ error: error.message });
@@ -110,9 +110,11 @@ export const getOrderById = async (req, res) => {
 // Update order status (Admin only)
 export const updateOrderStatus = async (req, res) => {
     try {
+
+        console.log("updateOrderStatus body:", req.body);
         const parsed = updateOrderSchema.safeParse(req.body);
-        if (!parsed.success) {
-            return res.status(400).json({ errors: parsed.error.errors });
+        if (!parsed.success || !parsed.data.status) {
+            return res.status(400).json({ error: "Status is required" });
         }
 
         const { status } = parsed.data;
@@ -130,11 +132,11 @@ export const updateOrderStatus = async (req, res) => {
 // Delete order (optional - usually you'd "cancel" instead)
 export const deleteOrder = async (req, res) => {
     try {
-        await prisma.order.delete({
-            where: { id: req.params.id },
-        });
+        await prisma.orderItem.deleteMany({ where: { orderId: req.params.id } });
+        await prisma.order.delete({ where: { id: req.params.id } });
         res.json({ message: "Order deleted successfully" });
     } catch (error) {
+        console.error("deleteOrder:", error);
         res.status(500).json({ error: error.message });
     }
 };

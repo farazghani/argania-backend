@@ -94,6 +94,7 @@ model Order {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
   Product   Product? @relation(fields: [productId], references: [id])
   productId String?
 }
@@ -130,6 +131,8 @@ enum Role {
 
 enum OrderStatus {
   PENDING
-  COMPLETED
+  PROCESSING
+  SHIPPED
+  DELIVERED
   CANCELED
 }

@@ -7,11 +7,34 @@ import userRoutes from "./routes/userRoutes.js";
 import cartRoutes from "./routes/cartroutes.js";
 import addressRoutes from "./routes/addressroutes.js";
 import adminroutes from "./routes/adminroutes.js";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
+import xss from "xss-clean";
+import cors from "cors";
 
 const app = express();
-const prisma = new PrismaClient();
+
+// 1️⃣ Set security headers
+app.use(helmet());
+
+// 2️⃣ Enable CORS for your frontend domain
+app.use(cors({
+    origin: ["https://your-frontend-domain.com"], // or "*" for testing
+    credentials: true,
+}));
+
+// 3️⃣ Prevent XSS attacks
+app.use(xss());
+
+// 4️⃣ Limit repeated requests (brute-force / DoS protection)
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 mins
+    max: 100, // limit each IP to 100 requests
+    message: "Too many requests, please try again later.",
+});
 
 
+app.use(limiter);
 
 app.use(bodyParser.json());
 app.use("/api/products", productRoutes);
@@ -23,7 +46,10 @@ app.use("/api/addresses", addressRoutes);
 
 
 
+app.get("/", (req, res) => {
+    res.send("API running ✅");
+});
 
-app.listen(3000, () => { console.log("Server is running on port 3000") });
+export default app;
 
 

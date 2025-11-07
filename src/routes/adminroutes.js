@@ -1,14 +1,14 @@
 import express from "express";
 import { registerAdmin, getAllOrders, createVoucher } from "../controllers/admincontroller.js";
-import { isAdmin } from "../middlewares/auth.js";
-
-
+import { authMiddleware, isAdmin } from "../middlewares/auth.js";
 
 const router = express.Router();
 
+// Public route
 router.post("/register-admin", registerAdmin);
-router.post("/getAllorders", isAdmin, getAllOrders);
-router.post("/create-voucher", isAdmin, createVoucher);
 
+// Admin-only routes
+router.get("/get-all-orders", authMiddleware, isAdmin, getAllOrders);
+router.post("/voucher", authMiddleware, isAdmin, createVoucher);
 
-export default router;
+export default router
