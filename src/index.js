@@ -8,12 +8,18 @@ import cartRoutes from "./routes/cartroutes.js";
 import addressRoutes from "./routes/addressroutes.js";
 import adminroutes from "./routes/adminroutes.js";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
-import xss from "xss-clean";
+import rateLimit from "express-rate-limit"; 
+import webhookroutes from "./routes/webhookroutes.js";
+
 import cors from "cors";
 
 const app = express();
 
+
+// 1️⃣ FIX: Allow ngrok + proxies
+app.set("trust proxy", 1);
+
+app.use("/api/payment", webhookroutes);
 // 1️⃣ Set security headers
 app.use(helmet());
 
@@ -23,8 +29,8 @@ app.use(cors({
     credentials: true,
 }));
 
-// 3️⃣ Prevent XSS attacks
-app.use(xss());
+
+
 
 // 4️⃣ Limit repeated requests (brute-force / DoS protection)
 const limiter = rateLimit({

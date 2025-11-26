@@ -21,6 +21,7 @@ model User {
   role      Role     @default(USER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  tokenVersion Int @default(0)  
 
   orders    Order[]
   cartItems CartItem[]
@@ -76,6 +77,7 @@ model Address {
   updatedAt DateTime @updatedAt
 }
 
+
 model Order {
   id        String      @id @default(cuid())
   userId    String
@@ -94,10 +96,15 @@ model Order {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  razorpayOrderId   String?  // from Razorpay after create-order
+  razorpayPaymentId String?  // from webhook
+  razorpaySignature String?  // optional, saved for logs
 
   Product   Product? @relation(fields: [productId], references: [id])
   productId String?
 }
+
 
 model OrderItem {
   id        String @id @default(cuid())
@@ -118,6 +125,23 @@ model CartItem {
   product   Product @relation(fields: [productId], references: [id])
 }
 
+model Payment {
+  id                String   @id @default(cuid())
+  
+  orderId           String   // internal order id
+  razorpayOrderId   String
+  razorpayPaymentId String?
+  amount            Int
+  currency          String   @default("INR")
+  status            PaymentStatus   // "created", "authorized", "captured", "failed"
+
+  method            String?  // card, upi, netbanking, wallet
+  email             String?
+  contact           String?
+
+  createdAt         DateTime @default(now())
+}
+
 model Category {
   id       String    @id @default(cuid())
   name     String
@@ -135,4 +159,12 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELED
+}
+
+enum PaymentStatus {
+  CREATED        // payment created but not authorized yet
+  AUTHORIZED     // payment authorized by user but not captured
+  CAPTURED       // payment completed (success)
+  FAILED         // payment failed
+  REFUNDED       // optional future use
 }

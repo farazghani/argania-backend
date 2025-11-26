@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import prisma from "../services/prisma.js";
 
+
 export const registerAdmin = async (req, res) => {
     try {
         const { name, email, password } = req.body;
