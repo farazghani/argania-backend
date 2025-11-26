@@ -39,7 +39,7 @@ describe("🧑‍💼 Admin Endpoints", () => {
             .send({
                 code: "DISCOUNT10",
                 discount: 10,
-                expiresAt: "2030-01-01",
+                expiresAt: "2030-01-01T00:00:00.000Z",
             });
 
         expect(res.statusCode).toBe(201);
