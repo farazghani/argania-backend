@@ -24,10 +24,6 @@ app.use("/api/payment", webhookroutes);
 app.use(helmet());
 
 // 2️⃣ Enable CORS for your frontend domain
-app.use(cors({
-    origin: ["https://your-frontend-domain.com"], // or "*" for testing
-    credentials: true,
-}));
 
 
 
