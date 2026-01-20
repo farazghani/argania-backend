@@ -1,9 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -14,106 +8,99 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  email     String   @unique
-  password  String
-  role      Role     @default(USER)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tokenVersion Int @default(0)  
-
-  orders    Order[]
-  cartItems CartItem[]
-  Address   Address[]
+  id           String     @id @default(cuid())
+  name         String
+  email        String     @unique
+  password     String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  role         Role       @default(USER)
+  tokenVersion Int        @default(0)
+  Address      Address[]
+  cartItems    CartItem[]
+  orders       Order[]
 }
 
 model Product {
-  id          String      @id @default(cuid())
-  name        String
-  description String?
-  price       Float
-  stock       Int
-  imageUrl    String?
-  categoryId  String?
-  category    Category?   @relation(fields: [categoryId], references: [id])
-  orders      Order[]
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  CartItem    CartItem[]
-  orderItems  OrderItem[]
+  id           String      @id @default(cuid())
+  name         String
+  description  String?
+  price        Float
+  stock        Int
+  categoryId   String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  imageUrl     String?
+  weight       Float?
+  isActive     Boolean     @default(true)
+  category     CategoryP   @default(NEWARRIVAL)
+  quantity     Float?
+  quantityUnit String      @default("L")
+  CartItem     CartItem[]
+  orders       Order[]
+  orderItems   OrderItem[]
 }
 
 model Voucher {
   id        String   @id @default(cuid())
   code      String   @unique
-  discount  Float // percentage (e.g. 10 = 10% off)
+  discount  Float
   expiresAt DateTime
   isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  orders Order[]
+  orders    Order[]
 }
 
 model Address {
-  id         String  @id @default(cuid())
+  id         String   @id @default(cuid())
   userId     String
-  label      String? // "Home", "Work", etc.
-  name       String // recipient name
-  phone      String
+  name       String
   line1      String
   line2      String?
   city       String
   state      String
   postalCode String
   country    String
-  isDefault  Boolean @default(false)
-
-  user   User    @relation(fields: [userId], references: [id])
-  orders Order[] // orders shipped to this address
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  isDefault  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  label      String?
+  phone      String
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id])
+  orders     Order[]
 }
-
 
 model Order {
-  id        String      @id @default(cuid())
-  userId    String
-  voucherId String?
-  addressId String
-  status    OrderStatus @default(PENDING)
-
-  user       User        @relation(fields: [userId], references: [id])
-  voucher    Voucher?    @relation(fields: [voucherId], references: [id])
-  address    Address     @relation(fields: [addressId], references: [id])
-  orderItems OrderItem[]
-
-  total      Float
-  discount   Float @default(0)
-  finalTotal Float
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  razorpayOrderId   String?  // from Razorpay after create-order
-  razorpayPaymentId String?  // from webhook
-  razorpaySignature String?  // optional, saved for logs
-
-  Product   Product? @relation(fields: [productId], references: [id])
-  productId String?
+  id                String      @id @default(cuid())
+  userId            String
+  total             Float
+  createdAt         DateTime    @default(now())
+  discount          Float       @default(0)
+  updatedAt         DateTime    @updatedAt
+  addressId         String
+  finalTotal        Float
+  productId         String?
+  voucherId         String?
+  status            OrderStatus @default(PENDING)
+  razorpayOrderId   String?     @unique
+  razorpayPaymentId String?
+  razorpaySignature String?
+  deliveryCharge    Float       @default(0)
+  address           Address     @relation(fields: [addressId], references: [id])
+  Product           Product?    @relation(fields: [productId], references: [id])
+  user              User        @relation(fields: [userId], references: [id])
+  voucher           Voucher?    @relation(fields: [voucherId], references: [id])
+  orderItems        OrderItem[]
 }
 
-
 model OrderItem {
-  id        String @id @default(cuid())
+  id        String  @id @default(cuid())
   orderId   String
   productId String
   quantity  Int
-
-  order   Order   @relation(fields: [orderId], references: [id])
-  product Product @relation(fields: [productId], references: [id])
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
 }
 
 model CartItem {
@@ -121,31 +108,22 @@ model CartItem {
   userId    String
   productId String
   quantity  Int
-  user      User    @relation(fields: [userId], references: [id])
   product   Product @relation(fields: [productId], references: [id])
+  user      User    @relation(fields: [userId], references: [id])
 }
 
 model Payment {
-  id                String   @id @default(cuid())
-  
-  orderId           String   // internal order id
+  id                String        @id @default(cuid())
+  orderId           String
   razorpayOrderId   String
   razorpayPaymentId String?
   amount            Int
-  currency          String   @default("INR")
-  status            PaymentStatus   // "created", "authorized", "captured", "failed"
-
-  method            String?  // card, upi, netbanking, wallet
+  currency          String        @default("INR")
+  status            PaymentStatus
+  method            String?
   email             String?
   contact           String?
-
-  createdAt         DateTime @default(now())
-}
-
-model Category {
-  id       String    @id @default(cuid())
-  name     String
-  products Product[]
+  createdAt         DateTime      @default(now())
 }
 
 enum Role {
@@ -159,12 +137,20 @@ enum OrderStatus {
   SHIPPED
   DELIVERED
   CANCELED
+  PAID
 }
 
 enum PaymentStatus {
-  CREATED        // payment created but not authorized yet
-  AUTHORIZED     // payment authorized by user but not captured
-  CAPTURED       // payment completed (success)
-  FAILED         // payment failed
-  REFUNDED       // optional future use
+  CREATED
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  REFUNDED
+}
+
+enum CategoryP {
+  HAIR
+  SKIN
+  PROFESSIONAL
+  NEWARRIVAL
 }

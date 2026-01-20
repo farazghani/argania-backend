@@ -42,12 +42,41 @@ export const getAllOrders = async (req, res) => {
             },
         });
 
+        if(!orders){
+            res.status(401).message("no orders found");
+        }
+        
+        console.log(orders);
         res.status(200).json(orders);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
 };
 
+export const getProfit = async (req , res) => {
+    try{
+         const orders = await prisma.order.findMany({
+            include: {
+                user: {
+                    select: { id: true, name: true, email: true },
+                },
+                orderItems: {  // 🔥 fixed: correct relation name
+                    include: { product: true },
+                },
+            },
+        });
+        
+        let total = 0;
+        for(let ord in orders){
+             total += ord.finalTotal;
+        }
+
+        console.log(total);
+       
+    }catch(err){
+        res.status(500).json({error: error.message});
+    }
+}
 // ✅ Admin: Create a voucher
 export const createVoucher = async (req, res) => {
     try {

@@ -92,12 +92,12 @@ export const razorpayWebhook = async (req, res) => {
         await prisma.order.update({
           where: { id: order.id },
           data: {
-            status: "PROCESSING",
+            status: "PAID",
             razorpayPaymentId,
             razorpaySignature: receivedSignature,
           },
         });
-
+       
         // Save payment
         await prisma.payment.create({
           data: {

@@ -10,11 +10,20 @@ import adminroutes from "./routes/adminroutes.js";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit"; 
 import webhookroutes from "./routes/webhookroutes.js";
-
+import paymentRoutes from "./routes/paymentRoutes.js";
+import shippingroute from "./routes/shippingroute.js"
 import cors from "cors";
 
 const app = express();
 
+app.use(cors({
+  origin: "http://localhost:8080",
+  credentials: true
+}));
+
+
+app.use(express.json());                 
+app.use(express.urlencoded({ extended: true }));
 
 // 1️⃣ FIX: Allow ngrok + proxies
 app.set("trust proxy", 1);
@@ -45,8 +54,8 @@ app.use("/api/users", userRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/admin", adminroutes);
 app.use("/api/addresses", addressRoutes);
-
-
+app.use("/api/payment" , paymentRoutes);
+app.use("/api/shipping" , shippingroute);
 
 app.get("/", (req, res) => {
     res.send("API running ✅");

@@ -1,8 +1,8 @@
 import express from "express";
-import { authMiddleware } from "../middleware/authMiddleware.js";
+import { authMiddleware } from "../middlewares/auth.js";
 import { createPaymentOrder } from "../controllers/createPaymentOrder.js";
 import { verifyPayment } from "../controllers/verifyPayment.js";
-import { razorpayWebhook } from "../controllers/razorpayWebhook.js";
+import { razorpayWebhook } from "../controllers/webhook.js";
 
 
 const router = express.Router();

@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import prisma from "../prisma/client.js";
+import prisma from "../services/prisma.js";
 
 export const verifyPayment = async (req, res) => {
     try {
@@ -24,14 +24,14 @@ export const verifyPayment = async (req, res) => {
             return res.status(404).json({ success: false, message: "Order not found" });
         }
 
-        if (order.status === "PAID") {
+        if (order.status === "PROCESSING") {
             return res.json({ success: true, message: "Already processed" });
         }
 
         await prisma.order.update({
             where: { razorpayOrderId: razorpay_order_id },
             data: {
-                status: "PAID",
+                status: "PROCESSING",
                 razorpayPaymentId: razorpay_payment_id
             }
         });

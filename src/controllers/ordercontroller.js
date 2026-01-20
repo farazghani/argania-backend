@@ -10,11 +10,15 @@ const razorpay = new Razorpay({
     key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+
 // Create Order
 export const createOrder = async (req, res) => {
   try {
-    const { addressId, voucherCode } = req.body;
+    const { addressId, voucherCode , deliveryCharge} = req.body;
     const userId = req.user.id;
+
+
+     console.log(deliveryCharge);
 
     // 1️⃣ Validate address
     const address = await prisma.address.findUnique({
@@ -36,6 +40,7 @@ export const createOrder = async (req, res) => {
     }
 
     // 3️⃣ Calculate totals
+    
     let total = 0;
 
     for (const item of cartItems) {
@@ -66,6 +71,10 @@ export const createOrder = async (req, res) => {
       voucherId = voucher.id;
     }
 
+    if(deliveryCharge){
+      finalTotal = total + deliveryCharge;
+    }
+
     // 5️⃣ Create internal order + order items
     const order = await prisma.order.create({
       data: {
@@ -74,6 +83,7 @@ export const createOrder = async (req, res) => {
         addressId,
         total,
         discount,
+        deliveryCharge,
         finalTotal,
         orderItems: {
           create: cartItems.map((item) => ({
@@ -87,31 +97,16 @@ export const createOrder = async (req, res) => {
       },
     });
 
-    // 6️⃣ Create Razorpay order
-    const razorpayOrder = await razorpay.orders.create({
-      amount: finalTotal * 100,
-      currency: "INR",
-      receipt: order.id,
-      notes: {
-        internalOrderId: order.id,
-        userId,
-      },
-    });
-
-    // 7️⃣ Save razorpayOrderId inside your DB
-    await prisma.order.update({
-      where: { id: order.id },
-      data: { razorpayOrderId: razorpayOrder.id },
-    });
-
     // 8️⃣ Return details to frontend
     return res.status(201).json({
       success: true,
       message: "Order created",
       orderId: order.id,
-      razorpayOrderId: razorpayOrder.id,
+      //razorpayOrderId: razorpayOrder.id,
       total,
       finalTotal,
+      discount,
+      deliveryCharge,
       currency: "INR",
       items: order.orderItems,
     });
@@ -122,6 +117,58 @@ export const createOrder = async (req, res) => {
   }
 };
 
+export const createRazorpayOrder = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    const userId = req.user.id;
+
+    // 1️⃣ Fetch order
+    const order = await prisma.order.findUnique({
+      where: { id: orderId },
+    });
+
+    console.log(userId)
+
+    if (!order || order.userId !== userId) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    if (order.razorpayOrderId) {
+      return res.status(400).json({ error: "Razorpay order already created" });
+    }
+    
+    console.log(order.finalTotal);
+    // 2️⃣ Create Razorpay order
+    const razorpayOrder = await razorpay.orders.create({
+      amount: order.finalTotal * 100,
+      currency: "INR",
+      receipt: order.id,
+      notes: {
+        internalOrderId: order.id,
+        userId,
+      },
+    });
+    
+    // 3️⃣ Save Razorpay order ID
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { razorpayOrderId: razorpayOrder.id },
+    });
+
+    // 4️⃣ Send to frontend
+    return res.status(201).json({
+      success: true,
+      razorpayOrderId: razorpayOrder.id,
+      amount: razorpayOrder.amount,
+      currency: razorpayOrder.currency,
+      orderId: order.id,
+    });
+
+  } catch (error) {
+    console.error("createRazorpayOrder:", error);
+    return res.status(500).json({ error: error.message });
+  }
+};
 
 // Get all orders (admin can see all, user sees own)
 export const getOrders = async (req, res) => {
@@ -136,6 +183,38 @@ export const getOrders = async (req, res) => {
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
+};
+
+
+export const getPaidOrder = async(req , res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      where: {
+        razorpayPaymentId: {
+          not: null,   // 🔥 only PAID orders
+        },
+      },
+      include: {
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+        address: true,
+        orderItems: {
+          include: {
+            product: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
+    res.status(200).json(orders);
+  } catch (err) {
+    console.error("Get Paid Orders Error:", err);
+    res.status(500).json({ error: "Failed to fetch paid orders" });
+  }
 };
 
 // Get order by ID

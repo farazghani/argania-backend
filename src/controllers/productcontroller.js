@@ -8,7 +8,9 @@ import {
 // ✅ Get all products
 export const getProducts = async (req, res) => {
     try {
-        const products = await prisma.product.findMany();
+       const products = await prisma.product.findMany({
+        where: { isActive: true }
+        });
         res.json(products);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -38,7 +40,8 @@ export const getProductById = async (req, res) => {
 export const addProduct = async (req, res) => {
     try {
         const validatedData = createProductSchema.parse(req.body);
-
+       
+        console.log(validatedData);
         const product = await prisma.product.create({
             data: validatedData,
         });
@@ -74,16 +77,17 @@ export const updateProduct = async (req, res) => {
 
 // ✅ Delete product
 export const deleteProduct = async (req, res) => {
-    try {
-        const { id } = productIdSchema.parse(req.params);
+  try {
+    const { id } = productIdSchema.parse(req.params);
 
-        await prisma.product.delete({ where: { id } });
+    await prisma.product.update({
+      where: { id },
+      data: { isActive: false },
+    });
 
-        res.json({ message: "Product deleted successfully" });
-    } catch (error) {
-        if (error.name === "ZodError") {
-            return res.status(400).json({ errors: error.errors });
-        }
-        res.status(500).json({ error: error.message });
-    }
+    res.json({ message: "Product archived successfully" });
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ error: error.message });
+  }
 };
