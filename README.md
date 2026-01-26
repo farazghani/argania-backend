@@ -1,7 +1,7 @@
 # argania-backend
 
 backend for arganiaprofessional
-
+```
 argania-backend/
 │── prisma/
 │ └── schema.prisma # Prisma models
@@ -33,3 +33,4 @@ argania-backend/
 │
 └── package.json
 
+```
