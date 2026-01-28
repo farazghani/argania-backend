@@ -1,6 +1,28 @@
 # argania-backend
 
 backend for arganiaprofessional
+
+Backend service for Argania Professional — an e-commerce platform that handles users, products, carts, and orders with a clean layered architecture using Node.js, Express, and Prisma.
+
+This project follows industry-standard backend structure with clear separation of routes → controllers → services → database to keep the codebase scalable, testable, and easy to maintain.
+
+
+Tech Stack
+
+Node.js
+
+Express.js
+
+Prisma ORM
+
+PostgreSQL / MySQL (via Prisma)
+
+JWT Authentication
+
+REST API architecture
+
+
+PROJECT STRUCTURE:
 ```
 argania-backend/
 │── prisma/
