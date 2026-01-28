@@ -15,9 +15,11 @@ import shippingroute from "./routes/shippingroute.js"
 import cors from "cors";
 
 const app = express();
+const frontend_Api = process.env.FRONTENDAPI;
+
 
 app.use(cors({
-  origin: "http://localhost:8080",
+  origin: frontend_Api,
   credentials: true
 }));
 
@@ -28,7 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 // 1️⃣ FIX: Allow ngrok + proxies
 app.set("trust proxy", 1);
 
-app.use("/api/payment", webhookroutes);
+app.use("/api/payment",express.raw({ type: "application/json" }), webhookroutes);
 // 1️⃣ Set security headers
 app.use(helmet());
 
